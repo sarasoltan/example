@@ -84,7 +84,7 @@ class NotesService {
       whereArgs: [id],
     );
     if (notes.isEmpty) {
-      throw CouldNotDeleteNote();
+      throw CouldNotFindNote();
     } else {
       final note = DatabaseNotes.fromRow(notes.first);
       _notes.removeWhere((note) => note.id == id);
@@ -130,10 +130,8 @@ class NotesService {
 
     const text = '';
     //create the note
-    final noteId = await db.insert(
-      noteTable,
-      {userIdColumn: owner.id, textColumn: text, isSyncedWithCloudColumn: 1},
-    );
+    final noteId = await db.insert(noteTable,
+        {userIdColumn: owner.id, textColumn: text, isSyncedWithCloudColumn: 1});
     final note = DatabaseNotes(
       id: noteId,
       userId: owner.id,
@@ -217,7 +215,9 @@ class NotesService {
   Future<void> _ensureDbIsOpen() async {
     try {
       await open();
-    } on DatabaseAlreadyOpenException {}
+    } on DatabaseAlreadyOpenException {
+      // empty
+    }
   }
 
   Future<void> open() async {
@@ -233,9 +233,9 @@ class NotesService {
 // create user and note table
 
       await db.execute(createUserTable);
-      await _cacheNotes();
 
       await db.execute(createNoteTable);
+      await _cacheNotes();
     } on MissingPlatformDirectoryException {
       throw UnableToGetDocumentsDirectory();
     }
